@@ -1,0 +1,99 @@
+"","Code","Country.x","Y_2013","Y_2010","Y_2005","Y_2000","X","WHO_region","Country.y","UN_population","At_risk","At_high_risk","Suspected_malaria_cases"
+"1","AFG","Afghanistan",250000,460000,780000,1500000,1,"Eastern Mediterranean","Afghanistan",31627506,75.58,26.91,390000
+"2","AGO","Angola",3400000,2400000,5400000,4800000,2,"African","Angola",24227524,100,100,3100000
+"3","ARG","Argentina",0,NA,190,240,3,"Region of the Americas","Argentina",42980026,NA,NA,NA
+"4","AZE","Azerbaijan",0,0,260,1700,4,"European","Azerbaijan",9629779,NA,NA,NA
+"5","BDI","Burundi",1400000,1900000,2200000,2800000,5,"African","Burundi",10816860,100,100,1400000
+"6","BEN","Benin",3100000,3200000,3400000,2700000,6,"African","Benin",10598482,100,100,3200000
+"7","BFA","Burkina Faso",7100000,9400000,7400000,7200000,7,"African","Burkina Faso",17589198,100,100,7000000
+"8","BGD","Bangladesh",700000,670000,1100000,3100000,8,"South-East Asia","Bangladesh",159077513,10.36,2.66,8400
+"9","BLZ","Belize",NA,180,1800,1700,9,"Region of the Americas","Belize",351706,NA,NA,50
+"10","BOL","Bolivia (Plurinational State of)",10600,20000,30000,48000,10,"Region of the Americas","Bolivia",10561887,45.37,2.5,9900
+"11","BRA","Brazil",230000,440000,820000,1200000,11,"Region of the Americas","Brazil",206077898,20.3,2.3,180000
+"12","BTN","Bhutan",NA,480,2000,6700,12,"South-East Asia","Bhutan",765008,NA,NA,50
+"13","BWA","Botswana",1000,3300,2300,26000,13,"African","Botswana",2219937,66.3,4.21,710
+"14","CAF","Central African Republic",1500000,1600000,1900000,1600000,14,"African","Central African Republic",4804316,100,100,1400000
+"15","CHN","China",4800,5900,23000,29000,15,"Western Pacific","China",1377240453,NA,NA,50
+"16","CIV","C’‚te d'Ivoire",8300000,9000000,9600000,8700000,16,"African","Cote d'Ivoire",22157107,100,100,7900000
+"17","CMR","Cameroon",5200000,5700000,8000000,6300000,17,"African","Cameroon",22773014,100,71,5300000
+"18","COD","Democratic Republic of the Congo",21000000,28000000,29000000,24000000,18,"African","Democratic Republic of the Congo",74877030,100,97,19000000
+"19","COG","Congo",820000,880000,1200000,1100000,19,"African","Congo",4504962,100,100,800000
+"20","COL","Colombia",79000,180000,190000,320000,20,"Region of the Americas","Colombia",47791393,22.23,4.51,79000
+"21","COM","Comoros",124000,140000,120000,110000,21,"African","Comoros",769991,100,47.58,2900
+"22","CPV","Cabo Verde",NA,140,220,490,22,"African","Cabo Verde",513906,NA,NA,50
+"23","CRI","Costa Rica",NA,120,3900,2100,23,"Region of the Americas","Costa Rica",4757606,NA,NA,NA
+"24","DJI","Djibouti",5400,1600,7900,10000,24,"Eastern Mediterranean","Djibouti",876174,50,0,5600
+"25","DMA","Dominican Republic",800,3400,5300,1600,25,"Region of the Americas","Dominican Republic",10405943,48.18,0.92,870
+"26","DZA","Algeria",NA,NA,NA,0,26,"African","Algeria",38934334,NA,NA,0
+"27","ECU","Ecuador",400,2100,19000,110000,27,"Region of the Americas","Ecuador",15902916,NA,NA,680
+"28","ERI","Eritrea",74000,93000,28000,70000,28,"African","Eritrea",5110444,100,71,65000
+"29","ETH","Ethiopia",3800000,4400000,4800000,8900000,29,"African","Ethiopia",96958732,68,27.2,2800000
+"30","GAB","Gabon",350000,230000,230000,440000,30,"African","Gabon",1687673,100,100,400000
+"31","GEO","Georgia",0,0,170,270,31,"European","Georgia",4034774,NA,NA,NA
+"32","GHA","Ghana",8300000,9600000,8300000,9200000,32,"African","Ghana",26786598,100,100,7300000
+"33","GIN","Guinea",4800000,4500000,4100000,4200000,33,"African","Guinea",12275527,100,100,4600000
+"34","GMB","Gambia",440000,420000,420000,420000,34,"African","Gambia",1928201,100,100,420000
+"35","GNB","Guinea-Bissau",197000,170000,190000,570000,35,"African","Guinea-Bissau",1800513,100,100,160000
+"36","GNQ","Equatorial Guinea",168000,150000,250000,190000,36,"African","Equatorial Guinea",820885,100,100,180000
+"37","GTM","Guatemala",10400,12000,69000,98000,37,"Region of the Americas","Guatemala",16015494,76.73,24.9,11000
+"38","GUY","Guyana",63000,52000,88000,52000,38,"Region of the Americas","Guyana",763893,93,35,20000
+"39","HND","Honduras",11000,21000,37000,81000,39,"Region of the Americas","Honduras",7961680,63.37,4.66,7200
+"40","HTI","Haiti",109000,230000,210000,200000,40,"Region of the Americas","Haiti",10572029,100,53,69000
+"41","IDN","Indonesia",4100000,4200000,5100000,3700000,41,"South-East Asia","Indonesia",254454778,26.13,11.77,1300000
+"42","IND","India",17000000,21000000,26000000,24000000,42,"South-East Asia","India",1295291543,91,14,13000000
+"43","IRN","Iran (Islamic Republic of)",570,2000,21000,22000,43,"Eastern Mediterranean","Iran",78143644,NA,NA,180
+"44","KEN","Kenya",6500000,3300000,5200000,7200000,44,"African","Kenya",44863583,100,70.19,6500000
+"45","KGZ","Kyrgyzstan",0,NA,250,NA,45,"European","Kyrgyzstan",5843617,NA,NA,NA
+"46","KHM","Cambodia",77000,180000,390000,1500000,46,"Western Pacific","Cambodia",15328136,70.72,48.13,120000
+"47","KOR","Republic of Korea",420,1900,1400,4500,47,"Western Pacific","Republic of Korea",50074401,NA,NA,1400
+"48","LAO","Lao People's Democratic Republic",93000,69000,50000,260000,48,"Western Pacific","Lao",6689300,92.61,31.24,88000
+"49","LBR","Liberia",1600000,1300000,1500000,1400000,49,"African","Liberia",4396554,100,100,1100000
+"50","LKA","Sri Lanka",0,750,1800,230000,50,"South-East Asia","Sri Lanka",20618991,NA,NA,0
+"51","MDG","Madagascar",1200000,650000,1300000,1500000,51,"African","Madagascar",23571713,100,87.77,2400000
+"52","MEX","Mexico",540,1300,3200,8100,52,"Region of the Americas","Mexico",125385833,NA,NA,560
+"53","MLI","Mali",7300000,5300000,6100000,5000000,53,"African","Mali",17086022,100,90,7500000
+"54","MMR","Myanmar",1200000,1600000,1500000,1400000,54,"South-East Asia","Myanmar",53437159,59.52,15.81,240000
+"55","MOZ","Mozambique",9300000,9300000,9300000,9400000,55,"African","Mozambique",27216276,100,100,8300000
+"56","MRT","Mauritania",72000,130000,200000,180000,56,"African","Mauritania",3969625,100,70,260000
+"57","MWI","Malawi",3500000,6200000,4100000,4800000,57,"African","Malawi",16695253,100,100,3300000
+"58","MYS","Malaysia",3300,6400,5600,13000,58,"Western Pacific","Malaysia",29901997,NA,NA,2000
+"59","NAM","Namibia",8900,2900,70000,84000,59,"African","Namibia",2402858,79.37,46.16,22000
+"60","NER","Niger",4900000,6000000,4600000,3700000,60,"African","Niger",19113728,94,53,5200000
+"61","NGA","Nigeria",59000000,59000000,59000000,54000000,61,"African","Nigeria",177475986,100,76.38,61000000
+"62","NIC","Nicaragua",2400,1400,13000,49000,62,"Region of the Americas","Nicaragua",6013913,50.2,1.3,4600
+"63","NPL","Nepal",14000,37000,83000,110000,63,"South-East Asia","Nepal",28174724,47.95,3.63,24000
+"64","PAK","Pakistan",1500000,1500000,4000000,3800000,64,"Eastern Mediterranean","Pakistan",185044286,98.31,28.92,1000000
+"65","PAN","Panama",830,490,4300,1200,65,"Region of the Americas","Panama",3867535,4.69,4.4,660
+"66","PER","Peru",95000,63000,160000,140000,66,"Region of the Americas","Peru",30973148,39.28,5.01,150000
+"67","PHL","Philippines",16000,53000,140000,110000,67,"Western Pacific","Philippines",99138690,60.98,6.59,13000
+"68","PNG","Papua New Guinea",1300000,1200000,1400000,1400000,68,"Western Pacific","Papua New Guinea",7463577,100,94,900000
+"69","PRK","Democratic People's Republic of Korea",16000,15000,7400,190000,69,"South-East Asia","Democratic People's Republic of Korea",25026772,NA,NA,7700
+"70","PRY","Paraguay",0,NA,410,7500,70,"Region of the Americas","Paraguay",6552518,NA,NA,NA
+"71","RWA","Rwanda",1300000,1100000,1600000,3400000,71,"African","Rwanda",11341544,100,100,3500000
+"72","SAU","Saudi Arabia",NA,NA,220,5200,72,"Eastern Mediterranean","Saudi Arabia",30886545,NA,NA,91
+"73","SDN","Sudan",1300000,1200000,2200000,2400000,73,"Eastern Mediterranean","Sudan",39350274,100,86.9,1400000
+"74","SEN","Senegal",1800000,1600000,1300000,2200000,74,"African","Senegal",14672557,100,96,1400000
+"75","SLB","Solomon Islands",42000,70000,220000,190000,75,"Western Pacific","Solomon Islands",572171,99,99,39000
+"76","SLE","Sierra Leone",2500000,2800000,2400000,2000000,76,"African","Sierra Leone",6315627,100,100,2000000
+"77","SLV","El Salvador",NA,NA,0,820,77,"Region of the Americas","El Salvador",6107706,NA,NA,10
+"78","SOM","Somalia",690000,280000,1100000,610000,78,"Eastern Mediterranean","Somalia",10517569,100,50.9,700000
+"79","SSD","South Sudan",1800000,1800000,1800000,2000000,79,"African","South Sudan",11911184,100,100,1900000
+"80","STP","Sao Tome and Principe",17000,5100,30000,47000,80,"African","Sao Tome and Principe",186342,100,100,3400
+"81","SUR","Suriname",1100,2400,14000,20000,81,"Region of the Americas","Suriname",538248,15.7,15.7,50
+"82","SWZ","Swaziland",620,530,970,1900,82,"African","Swaziland",1269112,28,0,260
+"83","TCD","Chad",1900000,1900000,2200000,1700000,83,"African","Chad",13587053,98.91,67.35,1900000
+"84","TGO","Togo",2600000,2900000,2800000,2500000,84,"African","Togo",7115163,100,100,2500000
+"85","THA","Thailand",127000,120000,120000,220000,85,"South-East Asia","Thailand",67725979,50,8,52000
+"86","TJK","Tajikistan",NA,120,2500,21000,86,"European","Tajikistan",8295840,NA,NA,1
+"87","TLS","Timor-Leste",90000,110000,270000,250000,87,"South-East Asia","Timor-Leste",1157360,89.71,33.67,120
+"88","TUR","Turkey",NA,NA,2300,12000,88,"European","Turkey",77523788,NA,NA,NA
+"89","TZA","United Republic of Tanzania",5700000,6900000,9700000,12000000,89,"African","United Republic of Tanzania",51822621,100,98.9,5300000
+"90","UGA","Uganda",8100000,14000000,13000000,12000000,90,"African","Uganda",37782971,100,100,8500000
+"91","UZB","Uzbekistan",0,NA,110,140,91,"European","Uzbekistan",29469913,NA,NA,NA
+"92","VEN","Venezuela (Bolivarian Republic of)",132000,78000,78000,78000,92,"Region of the Americas","Venezuela",30693827,18.8,2.6,230000
+"93","VNM","Viet Nam",23000,25000,39000,200000,93,"Western Pacific","Viet Nam",92423338,73.7,6.8,13000
+"94","VUT","Vanuatu",7900,18000,26000,23000,94,"Western Pacific","Vanuatu",258883,100,86.92,820
+"95","YEM","Yemen",460000,510000,630000,770000,95,"Eastern Mediterranean","Yemen",26183676,77.89,25.06,310000
+"96","ZAF","South Africa",19000,17000,17000,39000,96,"African","South Africa",53969054,10,4,12000
+"97","ZMB","Zambia",3300000,2200000,2900000,4000000,97,"African","Zambia",15721343,100,100,2800000
+"98","ZWE","Zimbabwe",1000000,960000,1000000,990000,98,"African","Zimbabwe",15245855,78.74,28.62,960000

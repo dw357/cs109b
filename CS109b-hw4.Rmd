@@ -1,0 +1,516 @@
+---
+title: Homework 4 - SVMs & Return of the Bayes 
+subtitle: "Harvard CS109B, Spring 2017"
+author: "Danqing Wang"
+date: "Mar 8 2017"
+output: pdf_document
+urlcolor: blue
+linkcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# svm library
+library('e1071')
+
+```
+
+
+# Problem 1: Celestial Object Classification
+
+SVMs are computationally intensive, much more so than other methods we've used in the course. Expect run times for your analyses to be much larger than before. Several SVM packages are available, we recommend using the `e1071` library, though you're free to use whatever package you feel comfortable with -- we'll provide extra hints for the `svm` function from this package. 
+
+In this problem, the task is to classify a celestial object into one of 4 categories using photometric measurements recorded about the object. The training and testing datasets are provided in the `dataset_1_train.txt` and `dataset_1_test.txt` respectively. Overall, there are a total of 1,379 celestial objects described by 61 attributes. The last column contains the object category we wish to predict, `Class`.
+
+We'll be working with Support Vector Machines, trying out different kernels, tuning, and other fun things. *Hint*: Use the `kernel`, `degree`, `cost`, `gamma` arguments of the `svm` function appropriately.
+
+
+First, ensure that the that `Class` is a factor (quantitative values). These should be object categories and not integer values -- use `as.factor` if needed. 
+
+**Answer**
+
+```{r}
+train <- read.csv('./datasets/dataset_1_train.txt')
+test <- read.csv('./datasets/dataset_1_test.txt')
+
+str(train)
+summary(train$Class)
+
+train$Class <- as.factor(train$Class)
+test$Class <- as.factor(test$Class)
+
+str(train$Class)
+summary(train$Class)
+```
+
+1. Fit an RBF kernel to the training set with parameters `gamma` and `cost` both set to 1. Use the model to predict on the test set. 
+
+**Answer**
+
+```{r}
+library(e1071)
+# training model 
+m1 <- svm(Class ~ ., 
+          data = train,
+          kernel = "radial",
+          gamma = 1,
+          cost = 1)
+m1
+```
+
+```{r}
+# predict on test set
+pred.m1.test <- predict(m1, newdata = test)
+pred.m1.train <- predict(m1, newdata = train)
+```
+
+
+2. Look at the confusion matricies for both the training and testing predictions from the above model. What do you notice about the predictions from this model?  *Hint*: The `confusionMatrix` function in the `caret` package is quite useful.
+
+**Answer**
+
+```{r}
+library(caret)
+# confusion matrix for prediction on train set 
+cat('Train set: ')
+confusionMatrix(pred.m1.train, train$Class)
+
+# confusion matrix for prediction on test set
+cat('Test set: ')
+confusionMatrix(pred.m1.test, test$Class)
+```
+
+The overall accuracy of prediction on the training set is 1. The overall accuracy of prediction on the test set is 0.72. However, the test set is predicting everything as class 3. Without tuning for gamma and cost, the model is labeling everything as class 3 since it is the majority. In order to obtain a more accuracte model, we should tune gamma and cost as we will do in the following. 
+
+3. For the RBF kernel, make a figure showing the effect of the kernel parameter $\gamma$ on the training and test errors? Consider some values of `gamma` between 0.001 and 0.3. Explain what you are seeing. 
+
+```{r}
+# initialization of error lists
+error.train <- list()
+error.test <- list()
+
+# gamma values to vary
+gamma <- seq(0.001, 0.3, length.out = 40)
+
+# train error and test errors 
+for(i in 1:length(gamma)){
+mod <- svm(Class ~ ., 
+          data = train,
+          kernel = "radial",
+          gamma = gamma[i],
+          cost = 1)
+
+pred.train <- predict(mod, newdata = train)
+pred.test <- predict(mod, newdata = test)
+
+error.train[[i]] <- 1-mean(pred.train == train$Class)
+error.test[[i]] <- 1-mean(pred.test == test$Class)
+}
+
+# index of error.test with lowest gamma 
+ind <- which(as.numeric(error.test) == min(as.numeric(error.test)))
+
+errors <- data.frame(gamma = gamma,
+           error = c(as.numeric(error.train),as.numeric(error.test)),
+           label = c(rep('train', 40), rep('test', 40)))
+
+
+library(ggplot2)
+title <- sprintf('Training and Test Errors against gamma. Cost = 1. 
+Mininum Test Error of %.4f when gamma = %.4f',
+                 as.numeric(error.test)[ind],
+                 gamma[ind])
+ggplot(errors, aes(x = gamma, y = error, color = label))+
+  geom_line()+
+  labs(x = 'Gamma', y = 'Error', title = title)
+```
+
+The training error decreases as we increase the value of gamma. The test error decreases to a minimum before increasing again as we increase the value of gamma. We can think of gamma as a parameter for the radial function that sits on top of each training data points that provides information when we try to classify a new point. The larger the value of gamma, the narrower and more peaked is the radial function, this means that it has a smaller radius of influence for nearby points. A large gamma with narrow peaks will fit well on the training data set but provides little information on areas that are far away from the peaks or in between the peaks. Hence, when using the model to fit on the test dataset, the error increases for we have little information on most of the areas. On the other hand, when gamma is small, the radial functions are broad and have a greater radius of influence on the nearby area. However, each of these functions sitting on top of different training data points may interfere with one another, for a point that is sitting in between two peaks, both have a moderate effect on the point, this cause the model to break down at some point and the error will increase as gamma becomes smaller and smaller.
+
+4. For the RBF kernel, make a figure showing the effect of the `cost` parameter on the training and test errors? Consider some values of `cost` in the range of 0.1 to 20. Explain what you are seeing. 
+
+```{r}
+# initialization of error lists
+error.train <- list()
+error.test <- list()
+
+# gamma values to vary
+cost <- seq(0.1, 20, length.out = 40)
+
+# train error and test errors 
+for(i in 1:length(cost)){
+mod <- svm(Class ~ ., 
+          data = train,
+          kernel = "radial",
+          cost = cost[i])
+
+pred.train <- predict(mod, newdata = train)
+pred.test <- predict(mod, newdata = test)
+
+error.train[[i]] <- 1-mean(pred.train == train$Class)
+error.test[[i]] <- 1-mean(pred.test == test$Class)
+}
+
+# index of error.test with lowest cost 
+ind <- which(as.numeric(error.test) == min(as.numeric(error.test)))
+
+errors <- data.frame(cost = cost,
+           error = c(as.numeric(error.train),as.numeric(error.test)),
+           label = c(rep('train', 40), rep('test', 40)))
+
+
+library(ggplot2)
+title <- sprintf('Train and Test Errors against Cost. Gamma = %.4f
+Mininum Test Error of %.4f when cost = %.4f',
+                 mod$gamma,
+                 as.numeric(error.test)[ind],
+                 cost[ind])
+ggplot(errors, aes(x = cost, y = error, color = label))+
+  geom_line()+
+  labs(x = 'Cost', y = 'Error', title = title)
+```
+The train error decreases with increased value of Cost. The test error decreases and then increases with increased value of cost. A larger cost parameter gives emphasis on the accuracy of the fit and creates a softer margin. However, when cost is too large, the model will overfit to the training data. 
+
+5. Now the fun part: fit SVM models with the linear, polynomial (degree 2) and RBF kernels to the training set, and report the misclassification error on the test set for each model. Do not forget to tune all relevant parameters using 5-fold cross-validation on the training set (tuning may take a while!). *Hint*: Use the `tune` function from the `e1071` library. You can plot the error surface using `plot` on the output of a `tune` function.
+
+## Linear
+
+```{r}
+## Linear svm
+# linear model does not need to tune gamma 
+linear.tune <- tune(svm,
+                Class ~ .,
+                data = train,
+                kernel = "linear",
+                ranges = list(cost = seq(0.01, 1, by = 0.01)),
+                tunecontrol = tune.control(cross = 5))
+
+linear.tune
+```
+```{r}
+# linear svm evaluation
+str(linear.tune$performances)
+
+# best model 
+cat('Best Model:\n')
+linear.tune$best.model
+
+# visualization
+ggplot(linear.tune$performances, mapping = aes(x = cost, y = error)) + 
+  geom_line()+
+  ggtitle("Plot of error against cost parameter")
+```
+
+```{r}
+# linear svm prediction 
+pred.linear.test <- predict(linear.tune$best.model, newdata = test)
+confusionMatrix(pred.linear.test, test$Class)
+```
+
+## Polynmial with degree 2
+
+```{r}
+## Polynomial (degree 2) svm
+poly.tune <- tune(svm,
+                Class ~ .,
+                data = train,
+                kernel = "polynomial",
+                degree = 2,
+                ranges = list(gamma = seq(0.0001, 5, length.out = 20), 
+                              cost = seq(0.0001, 20, length.out = 20)),
+                tunecontrol = tune.control(cross = 5))
+
+poly.tune
+```
+
+```{r}
+# polynomial svm evaluation
+plot(poly.tune)
+
+str(poly.tune$performances)
+
+ggplot(poly.tune$performances, 
+       mapping = aes(x = gamma, y = error)) + 
+  geom_line() + 
+  facet_wrap(~cost, labeller = label_both)
+
+# best model 
+cat('Best Model:\n')
+poly.tune$best.model
+```
+
+```{r}
+# poly svm prediction 
+pred.poly.test <- predict(poly.tune$best.model, newdata = test)
+confusionMatrix(pred.poly.test, test$Class)
+```
+
+## RBF 
+
+```{r}
+## RBF svm 
+rbf.tune <- tune(svm,
+                Class ~ .,
+                data = train,
+                kernel = "radial",
+                ranges = list(gamma = seq(0.001, 0.05, by = 0.002), 
+                              cost = seq(0.1, 8, by = 0.5)),
+                tunecontrol = tune.control(cross = 5))
+rbf.tune
+
+```
+
+
+```{r}
+# rbf svm evaluation
+plot(rbf.tune)
+
+str(rbf.tune$performances)
+
+ggplot(rbf.tune$performances, 
+       mapping = aes(x = gamma, y = error)) + 
+  geom_line() + 
+  facet_wrap(~cost, labeller = label_both)
+
+# best model 
+cat('Best Model:\n')
+rbf.tune$best.model
+
+```
+
+```{r}
+# rbf svm prediction 
+pred.rbf.test <- predict(rbf.tune$best.model, newdata = test)
+confusionMatrix(pred.rbf.test, test$Class)
+```
+
+6. What is the best model in terms of testing accuracy? How does your final model compare with a naive classifier that predicts the most common class (3) on all points?
+
+*Hint:* This is a moderate-sized dataset, but keep in mind that computation will always be a limiting factor when tuning machine learning algorithms. For timing reference, attempting 40 combinations of `cost` and `gamma` using an RBF kernel on the training dataset took about 15 minutes to tune on a recent Macbook. The other kernels were much faster, e.g. linear should be done in only a few minutes.
+
+**Answer**
+
+The best model in terms of test accuracy is the linear model with an overall accuracy of 98.55%, while the polynomial with degree 2 model has an overall accuracy of 94.35%, and the rbf model has an overall accuracy of 96.67%. 
+
+The fact that the linear model performs well means the four classes are well separated from one another. This is also reflected in our rbf model when we are tuning for gamma and cost, as we increase cost, the error rate drops very fast, indicating that with only a small compensation for accuracy, the model is able to separate the classes well. 
+
+Although the linear model has a lower overall accuracy compared to the naive classifier which classified everything as class 3, the linear model is better as it is able to predict each class with more than 95% accuracy.
+
+
+# Problem 2: Return of the Bayesian Hierarchical Model
+
+We're going to continue working with the dataset introduced in Homework 3 about contraceptive usage by 1934 Bangladeshi women. The data are in `dataset_2.txt` which is now a merge of the training and test data that appeared in Homework 2.
+
+In order to focus on the benefits of Hierarchical Modeling we're going to consider a model with only one covariate (and intercept term). 
+
+1. Fit the following three models
+
+	(a) Pooled Model: a single logistic regression for `contraceptive_use` as a function of `living.children`.  Do not include `district` information.  You should use the `glm` function to fit this model. Interpret the estimated model.
+	
+**Answer**
+
+```{r}
+df <- read.csv('./datasets/dataset_2.txt')
+str(df)
+summary(df)
+```
+
+```{r}
+mod.pooled <- glm(contraceptive_use ~ living.children, 
+                  data = df,
+                  family = binomial(link = "logit"))
+
+summary(mod.pooled)
+
+# coef 
+coef <- mod.pooled$coefficients
+coef.pooled <- as.numeric(coef["living.children"])
+```
+The pooled model disregard the differences between districts and fit an overall model to all data points. We are assuming a single errors distribution for all districts. The coefficient for living.children in this model is the same regardless of which district a woman comes from.
+
+(b) Unpooled Model: a model that instead fits a separate logistic regression for each `district`.  Use the `glm` function to this model. *Hint*  The separate logistic regression models can be fit using one application of `glm` by having the model formula be `contraceptive_use ~ -1 + living.children * as.factor(district)`. Explain why this model formula is accomplishing the task of fitting separate models per district. Examine the summary output of the fitted model. 
+	
+
+**Answer**	
+	
+```{r}
+mod.unpooled <- glm(contraceptive_use ~ -1 + living.children * as.factor(district),
+                    data = df,
+                    family = binomial(link = "logit"))
+
+summary(mod.unpooled)
+
+coef <- mod.unpooled$coefficients
+coefnames.unpooled <- names(coef)[seq(61,120)]
+coef.unpooled <- as.numeric(coef[seq(62,120)])
+```
+
+This model formula is accomplishing the task of fitting separate models per distric by including interaction terms of living.children with each district. The coefficient for living.children:district(i) where i is the district number represents the model specific to the ith district. 
+
+In the unpooled model, we are considering each district independently and assuming that the errors in each district vary independently of the other districts. This is to say, the errors in each district has its own distribution and are not drawn from a common error distribution. By doing so, we notice that in this model the values of coefficients fitted for living.children in each district varies a lot.
+	
+(c) Bayesian Hierarchical Logistic Model: a Bayesian hierarchical logistic regression model with `district` as the grouping variable.  Use the `MCMChlogit` function in the `MCMCpack` library using arguments similar to the reaction time model in the lecture notes.  Make sure that both coefficients of the linear predictor are assumed to vary by `district` in the model specification.  Describe briefly in words how the results of this model are different from the pooled and unpooled models of parts (a) and (b).
+	
+**Answer**
+
+```{r}
+library(MCMCpack)
+
+mod.hierarchical <- MCMChlogit(fixed = contraceptive_use ~ living.children,
+                               random = ~ living.children,
+                               group = "district",
+                               data = df,
+                               burnin = 5000, mcmc = 10000, # burn-in and total iterations
+                               thin = 1, verbose = 1,
+                               beta.start = NA, sigma2.start = NA, Vb.start = NA,
+                               mubeta = c(-1.00804, 0.21240), # prior mean of beta_0 and beta_1
+                               Vbeta = 10000,
+                               r = 3, R = diag(c(1, 0.1)), nu = 0.001, delta = 0.001,
+                               FixOD = 1)
+
+# list of coefficients 
+coef <- apply(mod.hierarchical$mcmc, 2, mean)
+coefnames.hierarchical <- names(coef)[seq(63,122)]
+coef.hierarchical <- as.numeric(coef[seq(63,122)])
+
+# prediction accuracy on training set 
+pred <- round(mod.hierarchical$theta.pred)
+mean(pred == df$contraceptive_use)
+```
+The overall accuracy for prediction on the training set for this model is 65.7%. 
+
+The Bayesian hierarchical model assumes that all districts behave in a similar way, but each district has some random noise, and each district's noise is a random draw from a common distribution of noise. We can think of the distribution as a rubber band around the coefficients for each district, they can vary, but the random effects distribution keeps them from being too far apart. We notice that the coefficients vary less in the Bayesian hierarchical model compared to the unpooled model. This is because the unpooled model assumes that each district has an independent error distribution, and we are fitting models to each district independently, which results in a higher variability in the coefficients. The coefficients in the pooled model are the same regardless of district as the model does not differentiate between different districts. 
+
+
+2. In class we discussed that one of the benefits of using Bayesian hierarchical models is that it naturally shares information across the groupings. In this case, information is shared across districts. This is generally known as shrinkage. To explore the degree of shrinkage, we are going to compare coefficients across models and districts based on your results from part 1 above.
+
+	(a) Create a single figure that shows the estimated coefficient to `living.children` as a function of district in each of the three models above.  The horizontal axis should be the districts, and the vertical axis should be the estimated coefficient value (generally three estimated coefficients at each district corresponding to the three models).  Make sure that the points plotted for each model are distinct (different colors and/or plotting characters), and that you create a legend identifying the model-specific points on the figure.  You may want to consider adjusting the vertical axis if some estimated coefficients are so large (positively or negatively) that they obscure the general pattern of the bulk of points. Be sure to explain your decision.
+	
+**Answer**
+
+```{r}
+df.coef <- data.frame(districts = c(seq(101, 160), seq(101, 160), seq(101, 160)),
+          coef = c(rep(coef.pooled, 60), 1.064e-01, coef.unpooled, coef.hierarchical),
+          model = c(rep('pooled', 60), rep('unpooled', 60), rep('hierarchical', 60)))
+
+library(ggplot2)
+ggplot(df.coef, aes(x = districts, y = coef, color = model))+
+  geom_point()+
+  labs(x = 'Districts', y = 'Coefficients', 
+       title = 'Coefficients against districts in 3 different models')
+
+ggplot(df.coef, aes(x = districts, y = coef, color = model))+
+  geom_point()+
+  ylim(-2, 2)+
+  labs(x = 'Districts', y = 'Coefficients', 
+       title = 'Coefficients against districts in 3 different models, zoomed in')
+```	
+Since there is a large variabioity in the coefficients of the unpooled model but very small variability in the coefficients of the hierarchical model, which are centered around 0, we zoom in to the range of (-2, 2) for the coefficients axis to take a better look at the variation in hierarchical model coefficients. 
+	
+	
+(b) Write a short summary (300 words or less) that interprets the graph from part (a).  Pay particular attention to the relationship between the coefficients within each district, and how or whether the number of observations within each district plays a role in the relationship.  You may speculate on the reasons for what you are seeing. 
+	
+
+**Answer**
+
+```{r}
+# plot of number of data points availabe in each district 
+district.counts <- data.frame(table(df$district))
+plot(district.counts)
+
+# dataframe containing the coefficient values from 
+# the 3 models and the number of datapoints by district
+df.coef_counts <- data.frame(districts = c(seq(101, 160), seq(101, 160), seq(101, 160)),
+            coef = c(rep(coef.pooled, 60), 1.064e-01, coef.unpooled, coef.hierarchical),
+            counts = c(district.counts[[2]], district.counts[[2]],district.counts[[2]]),
+            model = c(rep('pooled', 60), rep('unpooled', 60), rep('hierarchical', 60)))
+
+library(ggplot2)
+ggplot(df.coef_counts, aes(x = counts, y = coef, color = model))+
+  geom_point()+
+  labs(x = 'Number of data points', y = 'Coefficients', 
+       title = 'Coefficients against number of data points in 3 different models')
+```
+
+**Answer**
+
+From the plot in part a, we see that there is a large variability in the coefficients of the unpooled model, very small variability in the coefficients of the hierarchical model, and no variability in the coefficients of the pooled model. 
+
+The hierarchical model is usually used when data are strutured in groups, such as in districts in this case. It assumes that all districts behave in a similar way, but each district may vary by having some random noise, and each district's noise is a random draw from the same distribution of noises. We can think of the distribution as a rubber band around the coefficients, beta_i, for each district, the betas can vary, but the random effects distribution keeps them from being too far apart. This results in the coefficients having a very small variability. The unpooled model, on the other hand, assumes that every district is independent, and we are effectively fitting an independent model to each district. The coefficients do not follow any distribution and thus the variability is large in the coefficients for different districts. In the pooled model, we are ignoring the differences between districts and fitting one model for all the data points. Thus, the coefficient is one and the same for all districts. 
+
+In terms of the number of data points available, we notice from the figure above that for districts with fewer data points, the variability of coefficients in the unpooled model is very high. However, there is little variability in the coefficients of the hierarchical model even when only a few data points are present for some districts. This is because the random effects distribution of the hierarchical model is shrinking the coefficients to a common population mean. This effect is particularly noticeable when the district has a small number of data points. 
+
+To summarize, the best model is the hierarchical model, which is able to take into account the behavior of contraceptive use in the entire population, at the same time recognizing the differences in behavior within each district. The unpooled model is the worst as it has too much variability in the coefficients, and does not take into consideration the common population behavior across districts. 
+
+
+3. Another benefit of shrinkage is how it affects probability estimates (recall the lucky, drunk friend from lecture whose classical estimate for the probability of guessing correctly was 100%). Extract the estimated probabilities from each model applied to the training data.  That is, for the pooled and unpooled analyses, use the `predict` function applied to the fitted object, using the argument `type="response"`.  For the hierarchical model, the `$theta.pred` component of the fitted model contains the estimated probabilities.
+	
+	(a) Plot histograms of the vectors of probability estimates for each model separately.  Make sure you standardize the horizontal axis so that the scales are the same.  How does the distribution of estimated probabilities compare across the three models?
+
+**Answer**
+
+```{r}
+pred.pooled <- data.frame(prob = as.numeric(predict(mod.pooled, type = "response")))
+pred.unpooled <- data.frame(prob = as.numeric(predict(mod.unpooled, type = "response")))	
+pred.hierarchical <- data.frame(prob = mod.hierarchical$theta.pred)
+
+ggplot(pred.pooled, aes(x = prob))+
+  geom_histogram(binwidth = 0.05)+
+  xlim(0, 1)+
+  labs(x = 'Predicted probabilities', y = 'counts',
+       title = 'Pooled model')
+
+ggplot(pred.unpooled, aes(x = prob))+
+  geom_histogram(binwidth = 0.05)+
+  xlim(0, 1)+
+  labs(x = 'Predicted probabilities', y = 'counts',
+       title = 'Unpooled model')
+
+ggplot(pred.hierarchical, aes(x = prob))+
+  geom_histogram(binwidth = 0.05)+
+  xlim(0, 1)+
+  labs(x = 'Predicted probabilities', y = 'counts',
+       title = 'Hierarchical model')
+
+```	
+
+The distribution of probabilities for the pooled model is very narrow. The distributions of prediction probabilities for the unpooled model and hierarchical model are much wider in comparison. However, we notice that the unpooled model has a wider distribution of probabilities with extreme values, but the hierarchical model has a shinked distribution of probabilities, with less extreme values. This is a result of the aforementioned shrinkage effect of the hierarchical model as it shrinks coefficients towards a common population mean. 
+
+
+(b) Create a scatter plot comparing predicted values from Unpooled and Hierarchical Models, making sure that the scale of the horizontal and vertical axes are the same, and that the plotting region is square rather than rectangular. Include on the plot the line $y=x$ (why do you think this is a useful line to superimpose?).  Briefly interpret the relationship between the probability estimates for these two models.  Are there particular features of the plot that highlight the intended benefits of using a hierarchical model over the unpooled analysis?  Briefly explain.
+
+**Answer**
+  
+```{r}
+pred.prob3 <- data.frame(
+  unpooled <- as.numeric(predict(mod.unpooled, type = "response"),
+  hierarchical <- mod.hierarchical$theta.pred))
+
+ggplot(pred.prob3, aes(x = unpooled, y = hierarchical))+
+  geom_point()+
+  xlim(0, 1)+
+  ylim(0, 1)+
+  coord_fixed(ratio=1)+
+  geom_abline(intercept = 0, slope = 1)+
+  labs(x="Unpooled Model Predicted Probabilities", 
+       y="Hierarchical Model Predicted Probabilities",
+       title = "Scatter plot of predicted probabilities ")
+```
+
+This is a scatter plot of predicted probabilities by the unpooled and the hierarchical models. Points that lie on the y = x line refers to those points predicted to have the same probability by both the unpooled and the hierarchical model. We notice that the unpooled model has a wider spread of probabilities compared to the hierarchical model. This is another way to visualize the large variability of the unpooled model, which resulted in large variability of coefficients, and hence predicted probabilities. The smaller spread of predicted probabilities of the hierarchical model is a way to visualize the shinkage to mean inherent to the model. The shrinkage to mean is indeed one intended benefits of the hierarchical model. 
+
+# Problem 3: AWS Preparation
+
+In prepartion for the upcoming Spark and Deep Learning modules, submit your AWS
+account information. This should have been created in Homework 0. We need specifically:
+
+* The email address associated with your AWS account
+* The email address associated with your Harvard ID, if different from above
+* Your AWS ID. This should be a 10 digit number. ([Instructions](http://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html))
+
+We need this information to enable GPU capable compute instances.
+
+* danqing@seas.harvard.edu
+* danqing@seas.harvard.edu
+* 801484355261

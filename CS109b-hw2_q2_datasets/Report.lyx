@@ -1,0 +1,251 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass revtex4-1
+\begin_preamble
+\raggedbottom
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement h
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+The Case For Combating Malaria
+\end_layout
+
+\begin_layout Author
+\noindent
+
+\size large
+Concentrated in the poorest regions of the world, malaria is a leading cause
+ of death and ill-health in the developing world.
+ It needs our attention, 
+\emph on
+NOW
+\emph default
+.
+ 
+\end_layout
+
+\begin_layout Part*
+Malaria situation today
+\end_layout
+
+\begin_layout Standard
+Malaria is a life-threatening disease caused by parasites that are transmitted
+ to people through the bites of infected female mosquitoes.
+ About 3.2 billion people – almost half of the world’s population – are at
+ risk of malaria.
+ Young children, pregnant women and non-immune travelers from malaria-free
+ areas are particularly vulnerable to the disease when they become infected.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Dashboard 1.png
+	scale 34
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align left
+Figure 1.
+ Number of malaria cases across the world in Year 2015.
+ African countries have the highest occurance by number, with Nigeria topping
+ the list.
+ India is the only Asian country among the top ten malaria plagued countires.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the year 2015, there are a total of 214 million malaria cases reported
+ worldwide.
+ A look at the regional distribution of malaria cases shows that tropical
+ regions are most affected.
+ Among all, Africa has the most number of malaria cases compared to the
+ rest of the world, contributing to about 90% of total global occurance.
+ Within Africa, Nigeria has the most number of malaria cases, more than
+ three times that of the Democratic Republic of Congo, which comes in second
+ on the list.
+ Although the total number of malaria cases in Africa decreased from 2000
+ to 2015 due to increasing glocal efforts, Nigeria saw an increase in the
+ number of cases from 2010 to 2015, and it remains to be the African country
+ most plagued by the disease.
+ India also has the most number of malaria cases in Asia, which puts it
+ at the third highest on the global malaria cases rank.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename Dashboard 2.png
+	scale 34
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align left
+Figure 2.
+ Increased funding in fighting malaria from Year 2005 to Year 2013.
+ Decrease in the number of malaria cases with increased funding effort is
+ observed.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part*
+Increased funding reduces malaria
+\end_layout
+
+\begin_layout Standard
+Malaria is preventable and curable.
+ Increased efforts are dramatically reducing the malaria burden in many
+ places.
+ Global funding efforts increased from 4,352 million in year 2005 to 12,894
+ million in year 2013.
+ This includes domestic resources, global funds, funding from the world
+ bank, United States, United Kingdom, as well as numerous other sources.
+ Domestic funds increases steadily from year 2005 to year 2013, constituting
+ a significant portion of the total monetary efforts towards fighting malaria.
+ Global funds increases from the year 2005 to 2009, but saw a dipping after
+ 2009 possibly due to the global financial crisis affecrting major countires
+ around the world.
+ However, since 2011, global funding efforts has started to increase again
+ and now contributes the most significant part among all funding efforts.
+ 
+\end_layout
+
+\begin_layout Standard
+The increase in funding saw a significant decrease in the number of malaria
+ cases.
+ The number of malaria cases in Ski lanka, in particular, has reduced from
+ 230 million in year 2000 to only 1,800 cases in 2005, removing itself from
+ the world malaria map.
+ Sri Lanka’s success was a result of concerted investment and efforts from
+ both demostic and global organizations.
+ Globally, the number of malaria cases has reduced drastically from 263
+ million in 2005 to 211 million in 2015, by 20%.
+ The global decrease in malaria incidence, which is the number of emerging
+ cases per year, has decreased by 37% between 2000 and 2015.
+ There is also a 60% decrease in global malaria mortality rate between the
+ same time period.
+ Increased funding saw a tangible reduction in the number of malaria cases
+ across the world.
+ 
+\end_layout
+
+\begin_layout Part*
+Shrinking the malaria map
+\end_layout
+
+\begin_layout Standard
+Today we are still faced with hundreds of millions of malaria cases around
+ the world.
+ There is still a long way to go in the fight against malaria, we are by
+ no means near eradicating malaria completely, especially in the developing
+ world.
+ Nevertheless, it is encouraging and rewarding to see that tremendous amount
+ of effort and funding we have put in towards fighting malaria has produced
+ tangible results in reducing both the incidence and motality rates.
+ With increased investments and sustained effort in this cause, we can no
+ doubt accelerate the shrinking of the malaria map and end the disease for
+ good.
+ 
+\end_layout
+
+\end_body
+\end_document

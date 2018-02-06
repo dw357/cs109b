@@ -1,0 +1,678 @@
+---
+title: Homework 5 - PCA, SVM & Clustering
+subtitle: "Harvard CS109B, Spring 2017"
+date: "Mar 2017"
+output: pdf_document
+urlcolor: blue
+linkcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1: Face recoginition
+
+In this problem, the task is to build a facial recognition system using Principal Components Analysis (PCA) and a Support Vector Machine (SVM). We provide you with a collection of grayscale face images of three political personalities "George W. Bush", "Hugo Chavez" and "Ariel Sharon", divided into training and test data sets. Each face image is of size $250 \times 250$, and is flattened into a vector of length 62500. All the data for this problem is located in the file `CS109b-hw5-dataset_1.Rdata`. You can read this file using the `load()` function, which will load four new variables into your environment. The vectorized images are available as rows in the arrays `imgs_train` and `imgs_test`. The identity of the person in each image is provided in the vectors `labels_train` and `labels_test`. The goal is to fit a face detection model to the training set, and evaluate its classification accuracy (i.e. fraction of face images which were recognized correctly) on the test set.
+
+One way to perform face recognition is to treat each pixel in an image as a predictor, and fit a classifier to predict the identity of the person in the image. Do you foresee a problem with this approach?
+
+Instead we recommend working with low-dimensional representations of the face images computed using PCA. This can be done by calculating the top $K$ principal components (PCs) for the vectorized face images in the training set, projecting each training and test image onto the space spanned by the PC vectors, and represent each image using the $K$ projected scores. The PC scores then serve as predictors for fitting a classification model. Why might this approach of fitting a classification model to lower dimensional representations of the images be more beneficial?
+
+The following function takes a vectorized version of an image and plots the image in its original form:
+
+```{r}
+rot90 <- function(x, n = 1){
+  #Rotates 90 degrees (counterclockwise)
+  r90 <- function(x){
+    y <- matrix(rep(NA, prod(dim(x))), nrow = nrow(x))
+    for(i in seq_len(nrow(x))) y[, i] <- rev(x[i, ])
+    y
+  }
+  for(i in seq_len(n)) x <- r90(x)
+  return(x)
+}
+
+# modified plot.face function for better contrast 
+plot.face = function(x,zlim=c(0,1)) {
+  #Plots Face given image vector x
+  x = pmin(pmax(x,zlim[1]),zlim[2])
+  cols = gray.colors(100)[1:100]
+  image(rot90(matrix(x,nrow=250)[,250:1],3),col=cols,
+        zlim=zlim,axes=FALSE, asp=1)
+}
+```
+
+* Apply PCA to the face images in `imgs_train`, and identify the top 5 principal components. Each PC has the same dimensions as a vectorized face image in the training set, and can be reshaped into a 250 x 250 image, referred to as an *Eigenface*. Use the code above to visualize the Eigenfaces, and comment on what they convey. (*Hint*: for better visualization, we recommend that you re-scale the PC vectors before applying the above code; e.g. multiplying the PC vectors by 500 results in good visualization)
+
+**Answer**
+
+```{r}
+data <- load('CS109b-hw5-dataset_1.Rdata')
+
+dim(imgs_train)
+dim(imgs_test)
+
+# example of an image (image 1)
+plot.face(imgs_train[1,])
+```
+```{r}
+# Perform principal component analysis 
+imgs_train.prc <- prcomp(imgs_train, 
+                         center = TRUE,
+                         scale = TRUE)
+summary(imgs_train.prc)
+```
+
+```{r}
+# Plotting the first ten principal components 
+plot(imgs_train.prc)
+```
+
+The first five principal components are PC1, PC2, PC3, PC4, and PC5, which are the first five variable loadings: `imgs_train.prc$rotation[, 1]` to `imgs_train.prc$rotation[, 5]`. We visualize them in the following: 
+
+## First 5 principal components 
+
+```{r}
+# Top 5 eigenfaces
+plot.face(imgs_train.prc$rotation[, 1]*500)
+title("PC1")
+
+plot.face(imgs_train.prc$rotation[, 2]*500)
+title("PC2")
+
+plot.face(imgs_train.prc$rotation[, 3]*500)
+title("PC3")
+
+plot.face(imgs_train.prc$rotation[, 4]*500)
+title("PC4")
+
+plot.face(imgs_train.prc$rotation[, 5]*500)
+title("PC5")
+```
+
+These eigenfaces select out the facial features. PC1 identifies the frontal facial contour, with details to the eys, nose and mouth, PC2 shows the edge of the chin and the right side of the face, PC3 identifies the shape of the left side of the head, PC4 identifies the contour of the top right side of the head, while PC5 identifies the countour and shadow of the face. 
+
+In the following, we reconstructs an image from the top 5 PC components and compare it to the original image. 
+
+```{r}
+## Reconstruction of the images from the top 5 PC components
+imgs_train.pc1to5 <- imgs_train.prc$x[, 1:5, drop = FALSE] %*%
+    t(imgs_train.prc$rotation[, 1:5, drop = FALSE]) # loading x eigenvectors 
+
+# reconstructed image
+plot.face(imgs_train.pc1to5[2,])
+title("Recontructed Image from top 5 PC")
+# original image 
+plot.face(imgs_train[2,])
+title("Original Image")
+
+```
+
+* Retain the top PCs that contribute to 90% of the variation in the training data. How does the number of identified PCs compare with the total number of pixels in an image? Compute the PC scores for each image in the training and test set, by projecting it onto the space spanned by the PC vectors.
+
+**Answer**
+
+```{r}
+# Cumulative variance
+cumvar <- summary(imgs_train.prc)$importance[3,] 
+cumvar[cumvar<=0.9]
+```
+
+Since the first 108 components give a cummulative varince of 0.89982. We shall use the first 109 principal components in the following which contributes to 90% of the variation in the training data. 109 is a much smaller number compared to the number of pixels of the images, which is 62,500. The number of principal components to keep is 2 orders of magnitudes smaller than the origianl dimension of 62,500. We have reduced the dimension significantly while capturing 90 percent of the variance. 
+
+```{r}
+# PC score for training set 
+train.score.90 <- imgs_train.prc$x[, 1:109] #dim: 339 x 109
+
+## PC score for test set 
+test.score.90 <- scale(imgs_test) %*%
+    imgs_train.prc$rotation[, 1:109, drop = FALSE] #dim: 339 x 109 
+
+```
+
+
+* Treating the PC scores as predictors, fit a SVM model to the  the training set, and report the classification accuracy of the model on the test set. How does the accuracy of the fitted model compare to a naïve classifier that predicts a random label for each image?
+
+*Hint:* You may use the function `prcomp` to perform PCA and `pr$rotation` attribute to obtain the loading vectors. The variance captured by each principal component can be computed using the `pr$sdev` attribute.
+
+**Answer**
+
+```{r}
+library("e1071")
+train.df <- data.frame(train.score.90, label = labels_train)
+test.df <- data.frame(test.score.90, label = labels_test)
+
+# tuning for best parameters 
+rbf.tune <- tune(svm,
+                label ~ .,
+                data = train.df,
+                kernel = "radial",
+                ranges = list(gamma = 10^(-5:1), cost = 10^(-5:1)),
+                tunecontrol = tune.control(cross = 5))
+rbf.tune
+rbf.tune$best.model
+```
+
+We tune the parameters (gamma, cost) of the rbf svm and find the best gamma is 0.001, and the best costis 10. In the following, we use these parameters and perform svm on the training set. 
+
+
+```{r}
+library(caret)
+# prediction on train
+pred.rbf.train <- predict(rbf.tune$best.model, newdata = train.df)
+confusionMatrix(pred.rbf.train, train.df$label)
+```
+
+The prediction accuracy on the train set is very high, at 99.12%. It is able to predict all three classes well with almost perfect accuracy. 
+
+
+```{r}
+# prediction on test
+pred.rbf.test <- predict(rbf.tune$best.model, newdata = test.df)
+confusionMatrix(pred.rbf.test, test.df$label)
+```
+
+The prediction accuracy on the test set is fairly high, at an overall accuracy of 93.81%. It is able to predict George_W_Bush with a very high accuracy of 99.6%, Hugo_Chavez with an accuracy of 75.7%, and Ariel_Sharon with an accuracy of 71%. 
+
+
+
+```{r}
+# Naive classifier with random label
+set.seed(123)
+random.vector <- runif(dim(test.df)[1])
+naive <- rep('na', dim(test.df)[1])
+naive[random.vector < 1/3] = 'Ariel_Sharon' 
+naive[random.vector >= 1/3 & random.vector < 2/3] = 'George_W_Bush'
+naive[random.vector > 2/3] = 'Hugo_Chavez'
+
+confusionMatrix(naive, test.df$label)
+
+```
+
+The naive classifier predicts with an overall accuracy of 34.51%, and approximately 33% accuracy on each of the three classes. This is expected as we have set up the naive classifier to predict randomly one of the three classes. Both the overall and class-specific accuracy of prediction by the naive classifier is significantly lower than the prediction accuracy of the svm on the test set. 
+
+# Problem 2: Analyzing Voting Patterns of US States
+
+In this problem, we shall use unsupervised learning techniques to analyze voting patterns of US states in six presidential elections. The data set for the problem is provided in the file `CS109b-hw5-dataset_2.txt`. Each row represents a state in the US, and contains the logit of the relative fraction of votes cast by the states for Democratic presidential candidates (against the Republican candidates) in elections from 1960 to 1980. The logit transformation was used to expand the scale of proportions (which stay between 0 and 1) to an unrestricted scale which has more reliable behavior when finding pairwise Euclidean distances.  Each state is therefore described by 6 features (years). The goal is to find subgroups of states with similar voting patterns. 
+
+You will need the `cluster`, `factoextra`, `mclust`, `corrplot`, `dbscan`, `MASS`, `ggplot2`, `ggfortify` and `NbClust` libraries for this problem.
+
+# Part 2a: Visualize the data
+Generate the following visualizations to analyze important characteristics of the data set:
+
+- Rescale the data, and compute the Euclidean distance between each pair of states. Generate a heat map of the pair-wise distances (*Hint:* use the `daisy` and `fviz_dist` functions).
+- Apply multi-dimensional scaling to the pair-wise distances, and generate a scatter plot of the states in two dimension  (*Hint*: use the `cmdscale` function).
+- Apply PCA to the data, and generate a scatter plot of the states using the first two principal components  (*Hint:* use the `prcomp` function). Add a 2d-density estimation overlay to the plot via the `geom_density2d` function.
+
+Summarize the results of these visualizations. What can you say about the similarities and differences among the states with regard to voting patterns?  By visual inspection, into how many groups do the states cluster?
+
+```{r}
+df <- read.csv("CS109b-hw5-dataset_2.txt", sep = " ")
+dim(df)
+df
+```
+
+```{r fig.width=10, fig.height=10}
+## Rescale the data, and compute the Euclidean distance between each pair of states. Generate a heat map of the pair-wise distances (*Hint:* use the `daisy` and `fviz_dist` functions).
+library(cluster)
+library(factoextra)
+library(ggplot2)
+
+# Compute Euclidean distance
+df.dist <- daisy(scale(df), metric = "euclidean")
+
+# Heatmap 
+fviz_dist(df.dist)
+```
+
+The heatmap color tells us the distances between different states. The further the distance, the more different a pair of states are from each other, vice versa. From the heatmap, we can see that pairs that are more blue are further from each other, while those pairs that are more red are similar to each other. For example, we see that Mississippi is far apart from all other states; Rhoad Island and Massachusetts are very different from states like South Dakota, Alaska, Utah, Nebraska, etc., but are similar to each other, States such as New Jersey, Ohio, Illinois, Washington, etc are similar to one another and are likely to be in one cluster. 
+
+From the heatmap, we can group the states into roughly three clusters. Perhaps it is most obvious to concentrate on the rows of Rhoad Island and Massachusetts - they make three different regions/colors with the rest of the states: 1. the blue, which are states like Utah, Nerbraska, indicating they belong to a different cluster; 2. the red, which are themselves, and 3. the purple (in between red and blue), which are states such as Kentucky and Missouri. 
+
+
+```{r}
+## Apply multi-dimensional scaling to the pair-wise distances, and generate a scatter plot of the states in two dimension  (*Hint*: use the `cmdscale` function).
+
+# multi-dimensional scaling
+df.mds <- cmdscale(df.dist)
+df_mds <- data.frame(df, mds.point = df.mds)
+
+# scatter plot 
+ggplot(df_mds, mapping = aes(x = mds.point.1, y = mds.point.2)) +
+  geom_point()+
+  geom_text(aes(label = rownames(df.mds)), alpha = 0.6)
+
+```
+
+From the scatter plot, we can see that Mississippi is a clear outlier that is different from everyone else. Rhode Island and Massachusetts are also further away from the rest of the states and may belong to one cluster. Some states such as Oregon, New York, Pennsylvania, etc. are clustered tightly together in the center of the scatter plot and likely form one cluster. Other states such as Idaho, Oklahoma, Louisianna, Arkansas are away from the center cluster, and likely form another cluster. 
+
+
+```{r}
+## Apply PCA to the data, and generate a scatter plot of the states using the first two principal components  (*Hint:* use the `prcomp` function). Add a 2d-density estimation overlay to the plot via the `geom_density2d` function
+
+# PCA of data
+df.pca <- prcomp(df, scale = TRUE)
+summary(df.pca)
+
+df.pca.asdf <- data.frame(df.pca$x)
+ggplot(df.pca.asdf, aes(x = PC1, y = PC2))+
+  geom_point()+
+  geom_label(aes(label = rownames(df.pca.asdf)))+
+  geom_density_2d()
+# Scatter plot of first two PC, and 2d-density estimation overlay
+
+```
+
+The contour plot here conveys that states that are one the same contour lines are similar. States like Washington, Wisconsin, New York, Pennsylvania, etc are closely clustered together, and likely form one cluster. Other states that sit on contour lines further away from the center likely form another cluster. Rhode Island and Massachusetts likely form another cluster, whereas we see that Mississippi looks like an outlier that is far away from every other state. 
+
+From all the data visualizations above, it looks reasonable that we may find three clusters in this data set. 
+
+
+# Part 2b: Partitioning clustering
+Apply the following partitioning clustering algorithms to the data:
+
+- **K-means clustering** (*Hint:* use the `kmeans` function)
+- **Partitioning around medoids (PAM)** (*Hint:* use the `pam` function)
+
+In each case, determine the optimal number of clusters based on the Gap statistic, considering 2 to 10 clusters (*Hint:* use the `clusGap` function).  Also determine the choice of the optimal number of clusters by producing elbow plots (*Hint:* use `fviz_nbclust`).  Finally, determine the optimal number of clusters using the method of average silhouette widths (*Hint:* use `fviz_nbclust` with argument `method="silhouette"`).  Do the choices of these three methods agree?  If not, why do you think you are obtaining different suggested numbers of clusters?
+
+With your choice of the number of clusters, construct a principal components plot the clusters for *K-means* and *PAM* using the `fviz_cluster` function.  Are the clusterings the same?  Summarize the results of the clustering including any striking features of the clusterings.
+
+Generate silhouette plots for the *K-means* and *PAM* clusterings with the optimal number of clusters.  Identify states that may have been placed in the wrong cluster (*Hint:* use the `fviz_silhouette` function).
+
+**Answer**
+
+## (1) Identidy the optimal number of clusters
+```{r}
+## Choice of number of clusters using Gap statistics
+gapstat <- clusGap(scale(df), FUN=kmeans, K.max=10, B=500)
+print(gapstat, method="Tibs2001SEmax")
+fviz_gap_stat(gapstat,
+  maxSE=list(method="Tibs2001SEmax",SE.factor=1)) + 
+  ggtitle("Gap Stats (kmean): Optimal number of clusters") 
+
+gapstat <- clusGap(scale(df), FUN=pam, K.max=10, B=500)
+print(gapstat, method="Tibs2001SEmax")
+fviz_gap_stat(gapstat,
+  maxSE=list(method="Tibs2001SEmax",SE.factor=1)) + 
+  ggtitle("Gap Stats (PAM): Optimal number of clusters") 
+
+## Choice of number of clusters with elbow plots (fviz_nbclust)
+fviz_nbclust(scale(df), kmeans, method="wss") +
+  ggtitle("Elbow plot (kmean): Optimal number of clusters")+
+ geom_vline(xintercept=3,linetype=2)
+
+fviz_nbclust(scale(df), pam, method="wss") +
+  ggtitle("Elbow plot (PAM): Optimal number of clusters")+
+ geom_vline(xintercept=3,linetype=2)
+
+## Choice of number of clusters with method of average silhouette widths (fviz_nbclust, method="silhouette)
+fviz_nbclust(scale(df),kmeans,method="silhouette") +
+  ggtitle("Silhouette plot (kmean): Optimal number of clusters") 
+
+fviz_nbclust(scale(df),pam,method="silhouette") +
+  ggtitle("Silhouette plot (PAM): Optimal number of clusters") 
+
+
+# as a cross-check (not required in question), we use NBClust to check the most popular number of clusters 
+library(NbClust)
+
+nb.df = NbClust(scale(df),distance="euclidean",
+  min.nc=2, max.nc=9, method="ward.D2",index="all")
+print(nb.df)
+fviz_nbclust(nb.df) + theme_minimal()
+```
+
+- Gap statistics: for both kmeans and pam, gap statistics shows that 1 cluster is the optimal number of clusters. This is because we have set `spaceH0` to the default, which compresses the data space into a hypercube - this results in a preference for in a smaller number of clusters since the algorithm ignores small differences in certain dimensions and consider possible different clusters as one cluster. If we were to set `spaceH0` to `original`, which considers all dimentions of the data space - this will result in a prefernce for a larger number of clusters, as the algorithm is able to differentiate between clusters that are slightly in and out of planes from one another. 
+
+- Knee plot: For both kemans and pam, we read the knee plots and identify the number of clusters where there is a first change in gradient. In both cases, the method has identified 3 clusters to be the optimal number of clusters. 
+
+- Silhouette plot: The kmeans method idenfities the optimal cluster as 7, this is different from the rest of the predictions. The pam method identifies the optimal cluster as 3, which is consistent with the prediction from the knee plot. Even though the kmeans method identifies the optimal number of clusters as k = 7, the average silhouette width for k = 7 is not much higher than the for k = 3, and k = 3 is also a reasonable choice. The reason that k = 7 here is because the method is making a differentiation between very small differences between the clusters. 
+
+Using the `NBClust` function, we are able to optain a histogram which shows the best clustering scheme from the different results obtained by varying all combinations of number of clusters, distance measures, and clustering methods. The best number of clusters is clearly 3 in this case. Considering the context of the data set, this makes sense, too, as there will be one cluster of states that prefers to vote for the democratics, one cluster that prefers to vote for the republicans, and one cluster that consists of swing states. 
+
+
+## (2) Clustering
+
+```{r}
+## k-means
+set.seed(123)
+df.km = kmeans(scale(df), 3)
+print(df.km)
+
+fviz_cluster(df.km, data = scale(df),
+  main="K-means clustering of states")
+```
+
+The kmeans method classifies Rhode Island, Massachusetts, Minnesota, and Hawaii as one cluster, states such as Kansas, North Dakota, Nebraska, etc as one cluster, and states such as Connecticut, New York, New Hampshire, etc. as one cluster. We can see that Connecticut, New York, New Hampshire are tightly together, and even though Missisippi, Alabama, Georgia are clustered into the same cluster, they are far away from Connecticut, New York, New Hampshire. 
+
+
+```{r}
+## Partitioning around medoids (PAM)** (*Hint:* use the `pam` function)
+set.seed(123)
+df.pam = pam(scale(df), k=3)
+print(df.pam)
+
+fviz_cluster(df.pam, # don't need to specify data for pam
+  main="PAM clustering of states")
+```
+
+The pam method classifies Rhode Island, Massachusetts, New York, etc. as one cluster, states such as Kansas, Idaho, Nebraska, etc as one cluster, and states such as Alabama, Arkansas, South Carolina etc. as one cluster.  
+
+
+## (3) Silhouette diagnostic plots
+
+```{r}
+## K-means
+fviz_silhouette(silhouette(df.km$cluster, dist(scale(df))),
+  main="Silhouette plot for Kmeans clustering of states")+
+  theme(axis.text.x = element_text(angle = 90)) 
+
+# Compute silhouette
+sil.km = silhouette(df.km$cluster, dist(scale(df)))[, 1:3]
+
+# Objects with negative silhouette
+neg_sil_index.km = which(sil.km[, 'sil_width'] < 0)
+sil.km <- data.frame(states = rownames(df), sil.km)
+print(sil.km[neg_sil_index.km, , drop = FALSE])
+
+```
+
+When we look at the silhouette plot, we see that both clusters 1 and 2 are well clustered, with most of the states having widths above the average (dotted line), cluster three (blue) are not as well clustered, wich many states having silhouette widths below the average line. This is consistent with our earlier observation of the kmeans scatter plot, which has a number of states (Mississippi, Georgia etc.) in the clustr that are at a larger distance away from where most of the other states (New York, Connecticut, etc.) in the cluster are rightly clustered. In cluster 3, Florida has a negative sil_width, indicating this is  very bad classification. A negative sil_width means the dissimilarity between Florida and the other states in the next closest cluster is smaller than the dissimilarity between Florida and the other states in its own cluster. This means Florida is probably wrongly classified. 
+
+```{r}
+## PAM
+fviz_silhouette(silhouette(df.pam),
+  main="Silhouette plot for PAM clustering of states")+
+    theme(axis.text.x = element_text(angle = 90))
+
+# Compute silhouette
+sil.pam = silhouette(df.pam)[, 1:3]
+# Objects with negative silhouette
+neg_sil_index.pam = which(sil.pam[, 'sil_width'] < 0)
+print(sil.pam[neg_sil_index.pam, , drop = FALSE])
+```
+
+The silhouette plot shows that the clusters 2 and 3 are fairly well clustered, with most of the observations above the average sil_width. This means the two clusters are well separated from other clusters. However, cluster 1 is mostly below the average sil_width line and is not very well clustered. The smaller sil_width indicates that members of this cluster have very high dissimilarities among themselves, though not as high as compared to the next nearest cluster. States like Tennessee, Florida, Iowa are wrongly clustered as they have negative sil_width, indicating they are more similar to their next nearest cluster than its currently classified cluster. The large negative value of sil_width = -0.169 for Florida indicates that it is very badly classified and is most probably wrong. 
+
+# Part 2c: Hierarchical clustering
+
+Apply the following hierarchical clustering algorithms to the data:
+
+- **Agglomerative clustering** with Ward's method (*Hint*: use the `agnes` function)
+- **Divisive clustering** (*Hint*: use the `diana` function)
+
+In each case, summarize the results using a dendogram.  (*Hint:* use the `pltree` function in the `cluster` library to plot the dendograms, and the `cutree` function to derive cluster groups from hierarchical clustering model).  Determine the optimal number of clusters using Gap statistic, and add rectangles to the dendrograms sectioning off clusters (*Hint:* use `rect.hclust`).  Do you find that states that predominantly vote for Republicans (e.g., Wyoming, Idaho, Alaska, Utah, Alabama) are closer together in the hierarchy? What can you say about states that usually lean towards Democrats (e.g. Maryland, New York, Vermont, California, Massachusetts)?  Comment on the quality of clustering using Silhouette diagnostic plots. 
+
+*Hint:* The following code will help you reformat the output of the `agnes` and `diana` functions in order to apply the presented methods to find the optimal number of clusters:
+
+```{r}
+agnes.reformat<-function(x, k){
+# x: Data matrix or frame, k: Number of clusters
+  x.agnes = agnes(x,method="ward",stand=T)
+  x.cluster = list(cluster=cutree(x.agnes,k=k))
+  return(x.cluster)
+}
+
+diana.reformat<-function(x, k){
+# x: Data matrix or frame, k: Number of clusters
+  x.diana = diana(x,stand=T)
+  x.cluster = list(cluster=cutree(x.diana,k=k))
+  return(x.cluster)
+}
+
+```
+
+Based on your choice of the optimal number of clusters in each case, visualize the clusters using a principal components plot, and compare them with the clustering results in Part 2b.
+
+**Answer**
+
+```{r}
+## Agnes clustering
+df.agnes = agnes(df, method="ward", stand=T)
+pltree(df.agnes, cex=0.5, hang= -1,
+  main="AGNES fit",
+  xlab="State",sub="")
+
+## Diana clustering
+df.diana = diana(df, stand=T)
+pltree(df.diana, cex=0.5, hang= -1,
+  main="DIANA fit",
+  xlab="State",sub="")
+```
+
+## Optimal number of clusters using gap statistics 
+```{r}
+# Agglomerative clustering: AGNES
+set.seed(123)
+gapstat <- clusGap(scale(df), FUN=agnes.reformat, K.max=10, B=500, 
+                   spaceH0 = "original") #### here change spaceH0 to original to get >1 cluster
+print(gapstat, method="Tibs2001SEmax")
+fviz_gap_stat(gapstat,
+  maxSE=list(method="Tibs2001SEmax",SE.factor=1)) + 
+  ggtitle("Gap Stats (AGNES): Optimal number of clusters") 
+
+# Divisive clustering: DIANA
+gapstat <- clusGap(scale(df), FUN=diana.reformat, K.max=10, B=500,
+                   d.power = 2, spaceH0 = "original")
+print(gapstat, method="Tibs2001SEmax")
+fviz_gap_stat(gapstat,
+  maxSE=list(method="Tibs2001SEmax",SE.factor=1)) + 
+  ggtitle("Gap Stats (DIANA): Optimal number of clusters") 
+```
+
+Here, gap statistics predicts 3 clusters as the optimal number of clusters to use for both agnes and diana. 
+
+We chose to use the `original` sapceH0 here as gap statistics tend to give us only one cluster if we use the default option, which considers hypercubes of the original data space. By using `original`, we consider all dimensions of the data space and is able to make distinction between smaller differences among clusters, resulting in a larger number of optimal cluster predicted by gap statistics. In the context of the data set here, this makes sense, as the data had very small differenciations among the differently behaved voting clusters, and it therefore necessary for gap statistics to differentiate between small distinctions. 
+
+## Agenes and Diana clusterings 
+```{r}
+## Agnes clustering
+df.agnes = agnes(df, method="ward", stand=T)
+pltree(df.agnes, cex=0.5, hang= -1,
+  main="AGNES fit",
+  xlab="State",sub="")
+rect.hclust(df.agnes, k=3, border=2:3)
+
+
+## Diana clustering
+df.diana = diana(df, stand=T)
+pltree(df.diana, cex=0.5, hang= -1,
+  main="DIANA fit",
+  xlab="State",sub="")
+rect.hclust(df.diana, k=3, border=2:3)
+
+```
+
+In both the Agglomerative clustering (agnes) and Divisive clustering (diana) methods, Republican states such as Wyoming, Idaho, Alaska, Utah are clustered into the same cluster, but Alabama is not in the same cluster. This can be a result of bad classification for the state Alabama, which we will confirm by looking at the silhouette plot. 
+
+For Agglomerative clustering (agnes), Democrats states such as Maryland, New York, Vermont, California, Massachusetts are all classified into the same cluster. For Divisive clustering (diana), Vermont is not classified into the same cluster along with the rest of the Democratic states, we should take a look at the silhouette plot to see if this is a bad classification. 
+
+
+## Silhouette diagnostic plots
+
+```{r}
+## Agnes
+df.agnes.sil <- agnes.reformat(scale(df), k = 3)
+fviz_silhouette(silhouette(df.agnes.sil$cluster, dist(scale(df))),
+  main="Silhouette plot for Agnes clustering of states")+
+  theme(axis.text.x = element_text(angle = 90)) 
+
+# Compute silhouette
+sil.km = silhouette(df.agnes.sil$cluster, dist(scale(df)))[, 1:3]
+sil.km <- data.frame(states = rownames(df), sil.km)
+
+# Objects with negative silhouette
+neg_sil_index.km = which(sil.km[, 'sil_width'] < 0)
+print(sil.km[neg_sil_index.km, , drop = FALSE])
+
+
+
+## Diana
+df.diana.sil <- diana.reformat(scale(df), k = 3)
+fviz_silhouette(silhouette(df.diana.sil$cluster, dist(scale(df))),
+  main="Silhouette plot for Diana clustering of states")+
+  theme(axis.text.x = element_text(angle = 90)) 
+
+# Compute silhouette
+sil.km = silhouette(df.diana.sil$cluster, dist(scale(df)))[, 1:3]
+sil.km <- data.frame(states = rownames(df), sil.km)
+
+# Objects with negative silhouette
+neg_sil_index.km = which(sil.km[, 'sil_width'] < 0)
+print(sil.km[neg_sil_index.km, , drop = FALSE])
+
+```
+
+Indeed, in both the solhouette plots, Alabama, which is state number 1, has a lower than average sil_width, this means that it is not well clustered - it has a large dissimilarity with the rest of the states in its cluster. This explains why is it not classified into the same cluster as the other Republican states Wyoming, Idaho, Alaska, and Utah. 
+
+In the Agnes silhouette plot, we see that four states: Florida, New Mexico, Tennessee, and Virginia have negative sil_widths, expecially Virginia, with an extremely negative -0.26 sil_width. This indicates that they are wrongly clustered. 
+
+In the Diana silhouette plot, we see that state 45, which is Vermont, indeed has a very small sil_width that is close to 0, indicating that it is not a good classification. This explains why Vermont was not classified along with the rest of the Democratic states into one cluster. In particular, Iowa has a negative sil_width, indicating that it is probably wrongly clustered by the same reasonings as the previous parts. Also, Cluster 1 in general is not well clustered, since most of the data points have below average sil_widths.
+
+
+## Principal component visualization 
+```{r}
+## Based on your choice of the optimal number of clusters in each case, visualize the clusters using a principal components plot, and compare them with the clustering results in Part 2b.
+set.seed(123)
+
+# Agnes
+grp.agnes = cutree(df.agnes, k=3)
+fviz_cluster(list(data = scale(df), cluster = grp.agnes),
+  main="AGNES fit - 3 clusters")
+
+# Diana
+grp.diana = cutree(df.diana, k=3)
+fviz_cluster(list(data = scale(df), cluster = grp.diana),
+  main="DIANA fit - 3 clusters")
+
+```
+
+Compared to part 2b (kmeans and partitioning around medoids), the clusters formed by the Agglomerative method (Agnes) is similar to that from the Partitioning around medoids (PAM) method, the silhouette plots from these two methods are also similar, with two clusters having most datapoints above the average sil_width, indicating that they are well classified (clusters 2 and 3), while the first cluster (cluster 1) are not as well classified. 
+
+The Divisive clustering (Diana) method does not do a good job at classifying cluster 1, we saw that from the silhouette plot previously, and also here, we see that it only has four states, and includes the outlier Mississippi which is far away from every other state. This is a clear indication that this is not a good cluster. 
+
+# Part 2d: Soft clustering
+We now explore if soft clustering techniques can produce intuitive grouping.  Apply the following methods to the data:
+
+- **Fuzzy clustering** (*Hint:* use the `fanny` function)
+- **Gaussian mixture model** (*Hint:* use the `Mclust` function)
+
+For the fuzzy clustering, use the Gap statistic to choose the optimal number of clusters. For the Gaussian mixture model, use the internal tuning feature in `Mclust` to choose the optimal number of mixture components.
+
+Summarize both sets of results using both a principal components plot, and a correlation plot of the cluster membership probabilities. Compare the results of the clusterings.  Comment on the membership probabilities of the states. Do any states have membership probabilities approximately equal between clusters? For the fuzzy clustering, generate a silhouette diagnostic plot, and comment on the quality of clustering.
+
+*Hint:* use the `membership` attribute to obtain the cluster membership probabilties from the cluster model, and the `corrplot` function to generate a correlation plot.
+
+**Answer**
+
+## Fuzzy clustering: FANNY
+
+```{r}
+# Optimal number of clusters 
+set.seed(123)
+gapstat <- clusGap(scale(df), FUN=fanny, K.max=10, 
+                   maxit = 5000, memb.exp = 1.2, spaceH0 = "original") 
+print(gapstat, method="Tibs2001SEmax")
+fviz_gap_stat(gapstat,
+  maxSE=list(method="Tibs2001SEmax",SE.factor=1)) + 
+  ggtitle("Gap Stats (FANNY): Optimal number of clusters") 
+
+```
+
+The optimal number of clusters picked by gap statistics in 3. In the following, we use k = 3 for fuzzy clustering. 
+
+
+```{r}
+# FANNY clustering
+df.fanny = fanny(scale(df), k=3, memb.exp = 1.2)
+print((round(df.fanny$membership,3)))
+fviz_cluster(df.fanny,
+  main="FANNY fit - 3 clusters")
+```
+
+The Fuzzy clustering method has classified most democratic states together, New York, Pennsylvania, Maryland, etc. are in the same cluster, while Republican states such as Idaho, Kansas, Utah are classified into the same cluster. The clusters looks similar to the clusters selected by the Agnes method. 
+
+
+```{r fig.height= 5, fig.width = 3}
+library(corrplot)
+corrplot(df.fanny$membership, is.corr=F)
+```
+
+The correlation plot maps the probabilities of each state belong to a certain cluster. The darker the circle, the more likle that it belongs to a certain cluster, the lighter the circle, the less likely it belongs to a particular cluster. From the correlation plot, we see that most states have a dominating dark circle indicating that there is a strongly probability that the state belongs in this cluster. We also see that there are several states that have similar cluster membership probabilities. There are the states with lighter blue dots in more than one clusters. For example, it looks like New Mexico can be classified into either cluster 2 or 3 with very similar probabilities (0.531 and 0.455, respectively). Florida, on the other hand, belongs to cluster 1 with probability of 0.568, but also belongs to clusters 2 and 3 with probabilities 0.364 and 0.067 repsectively. Florida will get classified into cluster 1, but might have a negative silhouette width, since it has low dissimilarities with datapoints in other clusters. 
+
+
+```{r}
+## silhouette diagnostic plot
+## Fanny
+fviz_silhouette(silhouette(df.fanny),
+  main="Silhouette plot for Fuzzy clustering of states")+
+  theme(axis.text.x = element_text(angle = 90)) 
+
+# Compute silhouette
+sil.km = silhouette(df.fanny)[, 1:3]
+# Objects with negative silhouette
+neg_sil_index.km = which(sil.km[, 'sil_width'] < 0)
+print(sil.km[neg_sil_index.km, , drop = FALSE])
+```
+
+The silhouette plot shows that the second and third clusters are generally well clusered, as most data points are above the average sil_width. However, most data points in the first cluster are below the average sil_width, indicating that this is not a very good classification. Tennessee and Florida have negative sil_widths, indicating that they are wrongly classified, expecially Florida which has a large negative sil_width. Vermont and New Mexico also have negative sil_width values, this means that they are likely classified wrongly too. 
+
+
+## Gaussian mixture model (Mclust)
+
+```{r}
+# Gaussian mixture model (Mclust)
+library(mclust)
+df.mc = Mclust(scale(df))
+print(summary(df.mc))
+
+# optimal number of clusters
+print(df.mc$G)
+
+# estimated probability for an observation to be in each cluster
+fviz_cluster(df.mc, frame.type="norm", geom="point") +
+  ggtitle("Gaussian Mixture Model")
+
+# estimated probability for an observation to be in each cluster
+fviz_cluster(df.mc) +
+  ggtitle("Gaussian Mixture Model scatter plot: Mclust")
+
+```
+
+Compared to the fuzzy clustering (fanny) method, which chooses to classify the data points into three clusters, the optimal number of clusters selected by the `Mclust` function is 2. This assumes the data come from a mixture of 2 multivariate normal distributions with mean vector $\mu_k$ and covariance matrix $\Sigma_k$. We see that both Republican states and Demoratic states are classified into one common cluster, while states such as Georgia, Alabama, Arkansas - which are predicted to be in the "swing states" cluster by other algorithms above, form their own cluster. 
+
+
+
+```{r fig.height= 5, fig.width = 3}
+corrplot(df.mc$z, is.corr=F)
+```
+
+From the correlation heat map, the algorithm is able to classify datapoints into each cluster with fairly high certainty, as we see dark circles in the visual representation above. There is a large separation between the two clusters. 
+
+
+# Part 2e: Density-based clustering
+Apply DBSCAN to the data with `minPts = 5` (*Hint:* use the `dbscan` function). Create a knee plot (*Hint:* use the `kNNdistplot` function) to estimate `eps`.  Summarize the results using a principal components plot, and comment on the clusters and outliers identified.  How does the clustering produced by DBSCAN compare to the previous methods?
+
+**Answer**
+
+```{r}
+library(dbscan)
+
+set.seed(123)
+kNNdistplot(scale(df), k = 5)  
+abline(2, 0, lty=2, lwd = 2, col = "red") # added after seeing kNN plot
+title(sub="Knee at around y = 2",main="Knee plot for multishapes data")
+
+df.db = dbscan(scale(df), eps = 2, minPts = 5)
+fviz_cluster(df.db, scale(df), stand = FALSE, geom = "point") +
+  ggtitle("DBSCAN clustering of multishape data with eps = 2 and minPts = 5")
+
+```
+
+The density-based clustering is good at picking out clusters that are irregular in shape. The $\epsilon$ defines a radius of a neighborhood around an observation, and `MinPts` is the minimum number of points within an $\epsilon$ radius of an observation to be considered a core point. Here, the knee plot identifies the size of the $\epsilon$ neighborhood to be 2. Dbscan also identifies observations that do not belong to clusters as outliers, which are the black points From the scatter plot, we see that the cluster. 
+
+The density-based clustering (Dbscan) classifies both Democratic and Republican states into one cluster, with a few outliers: Rhoad Island, Massachusetts, Louisiana, Alabama, Georgia, and Mississippi. This is different from other methods, where most methods classify the states into three clusters, and MClust clusters the states into two clusters. Dbscan is good at picking out clusters with irrugular shapes, such as circular/donut shaped clusters, and probably isn't the most appropriate algorithm to use here. 
+
+
